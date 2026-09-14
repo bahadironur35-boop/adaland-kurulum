@@ -1,0 +1,247 @@
+// Aile-ici ani portali. Tek cocuk; adi ve sayfanin adi Settings'te (her aile kendi koyar).
+// Medya dosyalari private Vercel Blob'da; burada sadece pathname tutulur,
+// goruntulerken sunucu kisa omurlu presigned URL uretir.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Anne / baba hesaplari. Yalnizca bunlar yazabilir.
+model Parent {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  createdAt    DateTime  @default(now())
+  lastLoginAt  DateTime?
+  // Bu andan ONCE verilmis oturum cerezleri gecersizdir. Sifre sifirlaninca
+  // simdiye cekilir: kayip telefondaki 90 gunluk oturum aninda kapanir.
+  sessionsValidFrom DateTime?
+  // Gecici sifreyle giren, kendi sifresini belirleyene kadar iceri giremez.
+  mustChangePassword Boolean @default(false)
+  /// Yedek ve yas kitabi hatirlatmalari bu kisiye gitsin mi (anne-baba evet, akraba hayir).
+  careReminders Boolean @default(true)
+
+  sayings       Saying[]
+  photos        Photo[]
+  videos        Video[]
+  milestones    Milestone[]
+  passkeys      Passkey[]
+  pushSubs      PushSubscription[]
+  letters       Letter[]
+  recordings    Recording[]
+}
+
+/// Tek satirlik ayarlar (id = 1). Yas rozeti icin dogum tarihi burada.
+model Settings {
+  id          Int      @id @default(1)
+  birthDate   DateTime @db.Date
+  /// Cocugun adi. Metinlerde ek uyumuyla cekilir (src/lib/turkce.ts).
+  childName   String?
+  /// Sayfanin adi; aileye kendisi koyduruluyor (ornek: "Poyraz'in Dunyasi").
+  siteName    String?
+  /// web-push'un istedigi mailto adresi; ilk ebeveynin e-postasi.
+  contactEmail String?
+  /// Son tembel bakim (cop temizligi). Cron calismasa da gunde bir kez calisir.
+  lastHousekeepingAt DateTime?
+  /// Kurulum gunu. Bundan onceki yas yillari icin kitap hatirlatilmaz.
+  installedAt DateTime?
+  heroPhotoId    String?
+  lastReminderAt DateTime?
+  /// Son JSON yedegi (api/yedek indirildiginde)
+  lastBackupAt   DateTime?
+  /// Son yedek/kitap bildirimi (ayda en fazla bir)
+  lastCareReminderAt DateTime?
+  /// PDF'e kaydedilen son yas kitabi (ornek: 3 = "3 yas" kitabi)
+  lastYearbookAge    Int?
+  updatedAt      DateTime @updatedAt
+}
+
+/// Cocugun sozleri. saidAt takvim gunu (saat yok).
+model Saying {
+  id         String   @id @default(cuid())
+  text       String
+  saidAt     DateTime @db.Date
+  context    String?
+  audioPath  String?
+  audioMime  String?
+  isFavorite Boolean  @default(false)
+  addedById  String?
+  addedBy    Parent?  @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([saidAt])
+  @@index([deletedAt])
+}
+
+model Photo {
+  id         String      @id @default(cuid())
+  path       String      @unique
+  thumbPath  String?
+  takenAt    DateTime    @db.Date
+  caption    String?
+  width      Int
+  height     Int
+  sizeBytes  Int
+  mime       String
+  isFavorite Boolean     @default(false)
+  addedById  String?
+  addedBy    Parent?     @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt  DateTime    @default(now())
+  milestones Milestone[]
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([takenAt])
+  @@index([deletedAt])
+}
+
+model Video {
+  id          String   @id @default(cuid())
+  path        String   @unique
+  posterPath  String?
+  takenAt     DateTime @db.Date
+  caption     String?
+  durationSec Int?
+  sizeBytes   Int
+  mime        String
+  addedById   String?
+  addedBy     Parent?  @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([takenAt])
+  @@index([deletedAt])
+}
+
+/// Ilkler: ilk adim, ilk dis, ilk okul gunu...
+model Milestone {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime @db.Date
+  note      String?
+  photoId   String?
+  photo     Photo?   @relation(fields: [photoId], references: [id], onDelete: SetNull)
+  addedById String?
+  addedBy   Parent?  @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([date])
+  @@index([deletedAt])
+}
+
+model Measurement {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  heightCm  Decimal? @db.Decimal(5, 1)
+  weightKg  Decimal? @db.Decimal(5, 2)
+  note      String?
+  createdAt DateTime @default(now())
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([date])
+  @@index([deletedAt])
+}
+
+/// Akrabalar icin salt-okunur paylasim linki.
+model ShareLink {
+  id           String    @id @default(cuid())
+  token        String    @unique
+  label        String
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  viewCount    Int       @default(0)
+  lastViewedAt DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+/// WebAuthn / passkey (Face ID, parmak izi). Bir hesabin birden cok cihazi olabilir.
+model Passkey {
+  id           String   @id @default(cuid())
+  parentId     String
+  parent       Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  credentialId String   @unique
+  publicKey    Bytes
+  counter      BigInt   @default(0)
+  transports   String?
+  deviceType   String?
+  backedUp     Boolean  @default(false)
+  label        String
+  createdAt    DateTime @default(now())
+  lastUsedAt   DateTime?
+}
+
+/// Web push aboneligi (aylik hatirlatma icin). Cihaz basina bir kayit.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  parentId  String
+  parent    Parent   @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+/// Cocuga mektup: yazar disindaki herkes icin openAt gununden once muhurlu.
+model Letter {
+  id        String   @id @default(cuid())
+  authorId  String
+  author    Parent   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  openAt    DateTime @db.Date
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([openAt])
+  @@index([deletedAt])
+}
+
+/// Sozden bagimsiz ses kaydi: sarki, masal, kahkaha...
+model Recording {
+  id          String   @id @default(cuid())
+  title       String
+  recordedAt  DateTime @db.Date
+  path        String   @unique
+  mime        String
+  durationSec Int?
+  sizeBytes   Int      @default(0)
+  note        String?
+  addedById   String?
+  addedBy     Parent?  @relation(fields: [addedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+
+  /// Cop kutusu: dolu ise silinmis sayilir, 30 gun sonra kalici silinir
+  deletedAt DateTime?
+
+  @@index([recordedAt])
+  @@index([deletedAt])
+}
+
+/// Uygulama sirlari: oturum imzasi, VAPID cifti. Ilk calistirmada uretilir,
+/// boylece Deploy Button ile kurulan ailenin hicbir ortam degiskeni girmesi gerekmez.
+/// Gecis kurali: ayni adli ortam degiskeni VARSA o kazanir ve buraya kopyalanir.
+model AppSecret {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+}

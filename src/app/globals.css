@@ -1,0 +1,203 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Adaland tasarim belirtecleri
+   Zemin: cocuk odasi duvari mavisi. Kartlar: beyaz kagit, hafif egik.
+   Renkler boya kalemi kutusundan: kirmizi, gunes sarisi, cimen, uzum.
+   --------------------------------------------------------------- */
+@theme {
+  /* Varsayilan zemin: gokyuzu (acik mavi). Diger paletler asagida data-theme ile. */
+  --color-sky: #eaf3fa;
+  --color-sky-deep: #d5e6f4;
+  --color-dot: #c9dcec;
+  --color-paper: #ffffff;
+  --color-ink: #23305a;
+  --color-ink-soft: #5b6584;
+  --color-ink-faint: #8e97b3;
+  --color-line: #d8e2ee;
+
+  --color-crayon: #f0565e;
+  --color-crayon-soft: #ffe1e3;
+  --color-sun: #ffc531;
+  --color-sun-soft: #fff3c7;
+  --color-grass: #5db86a;
+  --color-grass-soft: #dff5e3;
+  --color-grape: #7b5fd8;
+  --color-grape-soft: #eae4fa;
+
+  --radius-blob: 1.5rem;
+  --shadow-paper: 0 2px 0 #d8e2ee, 0 12px 28px -14px rgba(35, 48, 90, 0.28);
+  --shadow-lift: 0 3px 0 #d8e2ee, 0 20px 40px -16px rgba(35, 48, 90, 0.35);
+}
+
+@theme inline {
+  --font-display: var(--font-baloo), ui-rounded, "Segoe UI", system-ui, sans-serif;
+  --font-body: var(--font-nunito), "Segoe UI", system-ui, sans-serif;
+  --font-hand: var(--font-patrick), "Segoe Print", "Comic Sans MS", cursive;
+}
+
+/* Paletler (Ayarlar > Gorunum). Kagit, murekkep ve boya kalemi renkleri sabit; sadece duvar degisir. */
+:root[data-theme="rose"] {
+  --color-sky: #fbeef0;
+  --color-sky-deep: #f3d9de;
+  --color-dot: #e9cdd4;
+  --color-line: #ead3d9;
+}
+:root[data-theme="lavender"] {
+  --color-sky: #f2effb;
+  --color-sky-deep: #e2dbf5;
+  --color-dot: #d6ccef;
+  --color-line: #e0d8f2;
+}
+
+/* Gece modu: lacivert gokyuzu, kagitlar koyu mavi, murekkep acik. Boya kalemi renkleri ayni kalir. */
+:root[data-theme="dark"] {
+  --color-sky: #141c3a;
+  --color-sky-deep: #1f2a52;
+  --color-dot: #1f2a52;
+  --color-paper: #1e2848;
+  --color-ink: #eef2ff;
+  --color-ink-soft: #b7c1e6;
+  --color-ink-faint: #7f8bb8;
+  --color-line: #34427a;
+  --color-crayon-soft: #4a2a3a;
+  --color-sun-soft: #4a3f1f;
+  --color-grass-soft: #1f3f2b;
+  --color-grape-soft: #2f2a5a;
+  --shadow-paper: 0 2px 0 #0e1430, 0 12px 28px -14px rgba(0, 0, 0, 0.6);
+  --shadow-lift: 0 3px 0 #0e1430, 0 20px 40px -16px rgba(0, 0, 0, 0.7);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] body {
+  /* yildizlar */
+  background-image:
+    radial-gradient(1.5px 1.5px at 20% 30%, rgba(255,255,255,.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 20%, rgba(255,255,255,.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 40% 80%, rgba(255,255,255,.5) 50%, transparent 51%),
+    radial-gradient(2px 2px at 85% 65%, rgba(255,197,49,.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,.5) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 55% 50%, rgba(255,255,255,.6) 50%, transparent 51%);
+  background-size: 260px 260px, 340px 340px, 300px 300px, 420px 420px, 380px 380px, 460px 460px;
+}
+
+html {
+  background: var(--color-sky);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  min-height: 100dvh;
+  /* ince noktali duvar kagidi */
+  background-image: radial-gradient(var(--color-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+h1, h2, h3, .display { font-family: var(--font-display); }
+
+@layer components {
+/* Konusma balonu: Adaland'in imzasi */
+.bubble {
+  position: relative;
+  background: var(--color-paper);
+  border-radius: var(--radius-blob);
+  box-shadow: var(--shadow-paper);
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 2rem;
+  bottom: -14px;
+  width: 26px;
+  height: 26px;
+  background: var(--color-paper);
+  clip-path: polygon(0 0, 100% 0, 20% 100%);
+}
+.tilt-l { transform: rotate(-1.2deg); }
+.tilt-r { transform: rotate(1deg); }
+
+/* Yas cikartmasi */
+.sticker {
+  font-family: var(--font-display);
+  border-radius: 999px;
+  background: var(--color-sun);
+  color: #23305a;
+  box-shadow: inset 0 0 0 2px #fff, inset 0 0 0 3px rgba(35,48,90,.15), 0 2px 0 rgba(35,48,90,.12);
+  transform: rotate(-6deg);
+  white-space: nowrap;
+}
+.sticker-grape { background: #eae4fa; }
+.sticker-grass { background: #dff5e3; }
+
+/* Polaroid */
+.polaroid {
+  background: var(--color-paper);
+  padding: 0.5rem 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-paper);
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  min-height: 44px; padding: 0 1.1rem; border-radius: 999px;
+  font-family: var(--font-display); font-weight: 600; font-size: 1rem;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+  cursor: pointer; user-select: none;
+}
+.btn:active { transform: translateY(2px) scale(.98); }
+.btn:focus-visible { outline: 3px solid var(--color-grape); outline-offset: 2px; }
+.btn-primary { background: var(--color-crayon); color: #fff; box-shadow: 0 3px 0 #c53d45; }
+.btn-primary:hover { background: #e94a53; }
+.btn-primary:active { box-shadow: 0 1px 0 #c53d45; }
+.btn-soft { background: var(--color-paper); color: var(--color-ink); box-shadow: 0 2px 0 var(--color-line); }
+.btn-soft:hover { background: var(--color-sky-deep); }
+.btn-ghost { background: transparent; color: var(--color-ink-soft); }
+.btn-ghost:hover { background: rgba(255,255,255,.6); }
+.btn[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
+
+.field {
+  width: 100%; min-height: 44px; padding: .65rem .9rem;
+  background: var(--color-paper); border: 2px solid var(--color-line); border-radius: 1rem;
+  font-family: var(--font-body); font-size: 1rem; color: var(--color-ink);
+  transition: border-color .12s;
+}
+.field:focus { outline: none; border-color: var(--color-grape); }
+.field::placeholder { color: var(--color-ink-faint); }
+textarea.field { resize: vertical; }
+.label { display:block; font-family: var(--font-display); font-weight: 600; font-size: .9rem; color: var(--color-ink-soft); margin-bottom: .35rem; }
+
+}
+
+/* Ziplayan noktalar (spinner yerine) */
+.dots span { display:inline-block; width:8px; height:8px; margin:0 2px; border-radius:50%; background: currentColor; animation: hop .9s infinite ease-in-out; }
+.dots span:nth-child(2){ animation-delay:.15s } .dots span:nth-child(3){ animation-delay:.3s }
+@keyframes hop { 0%,60%,100%{ transform: translateY(0) } 30%{ transform: translateY(-7px) } }
+
+/* Konfeti */
+.confetti-piece {
+  position: fixed; top: -12px; width: 10px; height: 14px; border-radius: 2px;
+  animation: fall 1.4s ease-in forwards; pointer-events: none; z-index: 100;
+}
+@keyframes fall {
+  0% { transform: translateY(0) rotate(0); opacity: 1 }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0 }
+}
+
+.sheet-enter { animation: sheet-up .22s ease-out; }
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0 } to { transform: none; opacity: 1 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece, .dots span, .sheet-enter { animation: none !important; }
+  .btn { transition: none; }
+}
+
+/* Yil kitabi: yazdir / PDF */
+@media print {
+  html { background: #fff; }
+  body { background-image: none; }
+  .print\:hidden { display: none !important; }
+  .book-page { break-after: page; }
+  .book-avoid { break-inside: avoid; }
+  .tilt-l, .tilt-r { transform: none; }
+  .bubble, .polaroid, .book-card { box-shadow: none; border: 1px solid #d8e2ee; }
+  @page { size: A5; margin: 12mm; }
+}
