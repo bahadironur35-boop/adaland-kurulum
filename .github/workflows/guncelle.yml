@@ -1,0 +1,29 @@
+# Kendi kendine guncelleme. Bu dosya BILEREK ince tutuldu ve degismemeli:
+# GitHub'in varsayilan izni, is akisi dosyalarini degistiren bir push'u reddediyor.
+# Butun mantik scripts/guncelle.mjs icinde, o dosya serbestce guncellenebiliyor.
+#
+# Kapatmak icin: GitHub > Actions > "Güncelleme" > sag ustteki menuden Disable workflow.
+name: Güncelleme
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"      # her pazartesi 07:00 (Türkiye)
+  workflow_dispatch:          # elle de çalıştırılabilir
+
+permissions:
+  contents: write
+
+concurrency:
+  group: guncelleme
+  cancel-in-progress: false
+
+jobs:
+  guncelle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: node scripts/guncelle.mjs
+        env:
+          UST_KAYNAK: https://github.com/bahadironur35-boop/adaland-kurulum.git
